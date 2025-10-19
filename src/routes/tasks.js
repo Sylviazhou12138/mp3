@@ -79,18 +79,13 @@ export default router;
 
 router.delete("/:id", async (req, res) => {
   try {
-    console.log("DELETE request received with ID:", req.params.id);
-
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      console.log("Invalid ObjectId:", req.params.id);
-      return res.status(400).json({ message: "Invalid Task ID format", id: req.params.id });
-    }
-
     const task = await Task.findById(req.params.id);
+
     if (!task) {
       return res.status(404).json({ message: "Task not found", data: null });
     }
 
+    
     if (task.assignedUser) {
       const user = await User.findById(task.assignedUser);
       if (user) {
@@ -104,14 +99,11 @@ router.delete("/:id", async (req, res) => {
     await Task.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
-      message: "Task deleted successfully",
+      message: "Task deleted and user pendingTasks updated",
       data: task,
     });
   } catch (error) {
-    console.error("Delete task failed:", error);
-    res.status(500).json({
-      message: "Error deleting task",
-      error: error.message || error,
-    });
+    res.status(500).json({ message: "Error deleting task", error });
   }
 });
+
