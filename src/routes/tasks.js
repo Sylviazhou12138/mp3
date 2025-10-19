@@ -75,7 +75,7 @@ router.put("/:id", async (req, res) => {
 export default router;
 
 
-import mongoose from "mongoose";
+
 
 router.delete("/:id", async (req, res) => {
   try {
