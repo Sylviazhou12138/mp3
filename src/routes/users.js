@@ -3,7 +3,7 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-// 获取所有用户
+
 router.get('/', async (req, res) => {
   try {
     const users = await User.find();
@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 创建新用户
+
 router.post('/', async (req, res) => {
   try {
     const { name, email } = req.body;
