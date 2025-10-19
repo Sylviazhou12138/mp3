@@ -1,0 +1,99 @@
+import express from "express";
+import Task from "../models/Task.js";
+import User from "../models/User.js";
+
+const router = express.Router();
+
+ 
+router.get("/", async (req, res) => {
+  try {
+    const tasks = await Task.find();
+    res.status(200).json({ message: "Tasks fetched", data: tasks });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching tasks", error });
+  }
+});
+
+
+router.post("/", async (req, res) => {
+  try {
+    
+    const task = new Task(req.body);
+    const savedTask = await task.save();
+
+
+    if (req.body.assignedUserName) {
+      const user = await User.findOne({ name: req.body.assignedUserName });
+      if (user) {
+      
+        user.pendingTasks.push(savedTask._id);
+        await user.save();
+
+        savedTask.assignedUser = user._id;
+        await savedTask.save();
+      }
+    }
+
+    
+    res.status(201).json({
+      message: "Task created and linked",
+      data: savedTask,
+    });
+  } catch (error) {
+    res.status(400).json({ message: "Error creating task", error });
+  }
+});
+
+
+router.put("/:id", async (req, res) => {
+  try {
+    const updatedTask = await Task.findByIdAndUpdate(
+      req.params.id,       
+      req.body,            
+      { new: true }        
+    );
+
+    if (!updatedTask) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    res.status(200).json({
+      message: "Task updated successfully",
+      data: updatedTask,
+    });
+  } catch (error) {
+    res.status(400).json({ message: "Error updating task", error });
+  }
+});
+export default router;
+
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found", data: null });
+    }
+
+    
+    if (task.assignedUser) {
+      const user = await User.findById(task.assignedUser);
+      if (user) {
+        user.pendingTasks = user.pendingTasks.filter(
+          (t) => t.toString() !== task._id.toString()
+        );
+        await user.save();
+      }
+    }
+
+    await Task.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      message: "Task deleted and user pendingTasks updated",
+      data: task,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting task", error });
+  }
+});
