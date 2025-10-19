@@ -45,13 +45,19 @@ router.post("/", async (req, res) => {
 });
 
 
+import mongoose from "mongoose";
+
 router.put("/:id", async (req, res) => {
   try {
-    const updatedTask = await Task.findByIdAndUpdate(
-      req.params.id,       
-      req.body,            
-      { new: true }        
-    );
+
+    const id = req.params.id.replace(/['"]+/g, "").trim();
+
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid task ID format" });
+    }
+
+    const updatedTask = await Task.findByIdAndUpdate(id, req.body, { new: true });
 
     if (!updatedTask) {
       return res.status(404).json({ message: "Task not found" });
@@ -65,6 +71,7 @@ router.put("/:id", async (req, res) => {
     res.status(400).json({ message: "Error updating task", error });
   }
 });
+
 export default router;
 
 
