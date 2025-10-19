@@ -1,10 +1,11 @@
 import express from "express";
+import mongoose from "mongoose";
 import Task from "../models/Task.js";
 import User from "../models/User.js";
 
 const router = express.Router();
 
- 
+// GET all tasks
 router.get("/", async (req, res) => {
   try {
     const tasks = await Task.find();
@@ -14,18 +15,15 @@ router.get("/", async (req, res) => {
   }
 });
 
-
+// POST create new task
 router.post("/", async (req, res) => {
   try {
-    
     const task = new Task(req.body);
     const savedTask = await task.save();
-
 
     if (req.body.assignedUserName) {
       const user = await User.findOne({ name: req.body.assignedUserName });
       if (user) {
-      
         user.pendingTasks.push(savedTask._id);
         await user.save();
 
@@ -34,7 +32,6 @@ router.post("/", async (req, res) => {
       }
     }
 
-    
     res.status(201).json({
       message: "Task created and linked",
       data: savedTask,
@@ -44,14 +41,10 @@ router.post("/", async (req, res) => {
   }
 });
 
-
-import mongoose from "mongoose";
-
+// PUT update task
 router.put("/:id", async (req, res) => {
   try {
-
     const id = req.params.id.replace(/['"]+/g, "").trim();
-
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid task ID format" });
@@ -72,11 +65,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-export default router;
-
-
-
-
+// DELETE task
 router.delete("/:id", async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -85,7 +74,6 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "Task not found", data: null });
     }
 
-    
     if (task.assignedUser) {
       const user = await User.findById(task.assignedUser);
       if (user) {
@@ -107,3 +95,4 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+export default router;
